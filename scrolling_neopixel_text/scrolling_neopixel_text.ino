@@ -34,13 +34,32 @@ int pass = 0;
 
 
 void updateLEDText() {
+  // Bluetooth request is formatted as:
+  // text,r,g,b\n
+
   if (Serial.available() > 0) {
-    ledText = Serial.readStringUntil('\n');
-    // ledText = "";
-    // while (Serial.available() > 0) {
-    //   char data = Serial.read();
-    //   ledText += data;
-    // }
+    String incomingData = Serial.readStringUntil('\n'); 
+    incomingData.trim(); // Remove whitespace
+
+    int firstComma = incomingData.indexOf(',');
+    if (firstComma == -1) return; // Invalid format
+
+    int secondComma = incomingData.indexOf(',', firstComma + 1);
+    if (secondComma == -1) return; // Invalid format
+
+    int thirdComma = incomingData.indexOf(',', secondComma + 1);
+    if (thirdComma == -1) return; // Invalid format
+
+    // Extract substrings based on comma positions
+    String textPart = incomingData.substring(0, firstComma);
+    String rPart = incomingData.substring(firstComma + 1, secondComma);
+    String gPart = incomingData.substring(secondComma + 1, thirdComma);
+    String bPart = incomingData.substring(thirdComma + 1);
+
+    // Update global variables and LED matrix
+    ledText = textPart;
+    matrix.setTextColor(matrix.Color(rPart.toInt(), gPart.toInt(), bPart.toInt()));
+    pass = 0;
   }
 }
 
@@ -57,7 +76,6 @@ void loop() {
     x = matrix.width();
 
     if(++pass >= 8) pass = 0;
-    matrix.setTextColor(colors[pass]);
   }
 
   matrix.show();
